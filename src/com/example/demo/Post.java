@@ -5,10 +5,18 @@ public class Post {
     private String platform;
     private String content;
     private String scheduledTime;
-    private String imageUrl;
-    private String videoUrl;
-    private String caption;
 
+    public Post() {
+    }
+
+    public Post(int id, String platform, String content, String scheduledTime) {
+        this.id = id;
+        this.platform = platform;
+        this.content = content;
+        this.scheduledTime = scheduledTime;
+    }
+
+    // Getter and Setter for 'id'
     public int getId() {
         return id;
     }
@@ -17,6 +25,7 @@ public class Post {
         this.id = id;
     }
 
+    // Getter and Setter for 'platform'
     public String getPlatform() {
         return platform;
     }
@@ -25,6 +34,7 @@ public class Post {
         this.platform = platform;
     }
 
+    // Getter and Setter for 'content'
     public String getContent() {
         return content;
     }
@@ -33,6 +43,7 @@ public class Post {
         this.content = content;
     }
 
+    // Getter and Setter for 'scheduledTime'
     public String getScheduledTime() {
         return scheduledTime;
     }
@@ -41,38 +52,12 @@ public class Post {
         this.scheduledTime = scheduledTime;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public String getVideoUrl() {
-        return videoUrl;
-    }
-
-    public void setVideoUrl(String videoUrl) {
-        this.videoUrl = videoUrl;
-    }
-
-    public String getCaption() {
-        return caption;
-    }
-
-    public void setCaption(String caption) {
-        this.caption = caption;
-    }
-
     @Override
+    // overridden to provide a user-friendly representation of a Post object.
     public String toString() {
         return "ID: " + id +
                 ", Platform: " + platform +
                 ", Content: " + content +
-                ", Scheduled Time: " + scheduledTime +
-                ", Image URL: " + imageUrl +
-                ", Video URL: " + videoUrl +
-                ", Caption: " + caption;
+                ", Scheduled Time: " + scheduledTime;
     }
 }

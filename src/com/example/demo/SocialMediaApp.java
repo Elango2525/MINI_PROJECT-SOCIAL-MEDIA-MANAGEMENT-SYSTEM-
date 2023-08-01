@@ -1,87 +1,77 @@
 package com.example.demo;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
-
-public class SocialMediaApp {
-    private static User currentUser = null;
-
+//inherit the functionality from the abstract class
+public class SocialMediaApp extends SocialMediaManager {
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-
-        while (true) {
-            if (currentUser == null) {
-                // Prompt for login if no user is currently logged in
-            	System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-                System.out.println("Social Media Management System");
-                System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-                System.out.println("1. Login");
-                System.out.println("2. Signup");
-                System.out.println("3. Exit");
-                
-                System.out.print("Enter your choice: ");
-                int choice = scanner.nextInt();
-                scanner.nextLine(); // Consume the newline character
-
-                switch (choice) {
-                    case 1:
-                        currentUser = login(scanner);
-                        break;
-                    case 2:
-                        signUp(scanner);
-                        break;
-                    case 3:
-                        System.out.println("Exiting the application.");
-                        scanner.close();
-                        System.exit(0);
-                        break;
-                    default:
-                        System.out.println("Invalid choice. Please try again.");
-                }
-            } else {
-                // User is logged in, show options for managing posts
-            	System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-                System.out.println("Social Media Management System");
-                System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-                System.out.println("1. Add Post");
-                System.out.println("2. Edit Post");
-                System.out.println("3. Schedule Post");
-                System.out.println("4. Delete Post");
-                System.out.println("5. View All Posts");
-                System.out.println("6. Logout");
-                System.out.print("Enter your choice: ");
-                int choice = scanner.nextInt();
-                scanner.nextLine(); // Consume the newline character
-
-                switch (choice) {
-                    case 1:
-                        addPost();
-                        break;
-                    case 2:
-                        editPost();
-                        break;
-                    case 3:
-                        schedulePost();
-                        break;
-                    case 4:
-                    	deletePost();
-                    	break;
-                    case 5:
-                    	viewAllPosts();
-                    	break;
-                    case 6:
-                        currentUser = null;
-                        break;
-                    default:
-                        System.out.println("Invalid choice. Please try again.");
-                }
-            }
-        }
+        SocialMediaApp app = new SocialMediaApp();
+        app.run();
     }
 
-    private static void signUp(Scanner scanner) {
+    // Implement abstract methods from the abstract class
+    @Override
+    protected User login() {
+        User user = new User();
+
+        while (true) {
+            System.out.print("Enter username: ");
+            String username = scanner.nextLine();
+            if (username.isEmpty()) {
+                System.out.println("Username is mandatory. Please try again.");
+            } else {
+                user.setUsername(username);
+                break;
+            }
+        }
+
+        while (true) {
+            System.out.print("Enter password: ");
+            String password = scanner.nextLine();
+            if (password.isEmpty()) {
+                System.out.println("Password is mandatory. Please try again.");
+            } else {
+                user.setPassword(password);
+                break;
+            }
+        }
+
+        Connection connection = DBConnection.getConnection();
+        if (connection != null) {
+            try {
+                String sql = "SELECT * FROM user WHERE username = ? AND password = ?";
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                preparedStatement.setString(1, user.getUsername());
+                preparedStatement.setString(2, user.getPassword());
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    user.setId(resultSet.getInt("id"));
+                    System.out.println("Login successful. Welcome, " + user.getUsername() + "!");
+
+                    return user;
+                } else {
+                    System.out.println("Invalid username or password. Login failed.");
+                }
+
+                resultSet.close();
+                preparedStatement.close();
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    protected void signUp() {
         User newUser = new User();
 
         while (true) {
@@ -170,64 +160,10 @@ public class SocialMediaApp {
             }
         }
     }
+    
 
-	// Add the login method to authenticate users
-    private static User login(Scanner scanner) {
-        User user = new User();
-
-        while (true) {
-            System.out.print("Enter username: ");
-            String username = scanner.nextLine();
-            if (username.isEmpty()) {
-                System.out.println("Username is mandatory. Please try again.");
-            } else {
-                user.setUsername(username);
-                break;
-            }
-        }
-
-        while (true) {
-            System.out.print("Enter password: ");
-            String password = scanner.nextLine();
-            if (password.isEmpty()) {
-                System.out.println("Password is mandatory. Please try again.");
-            } else {
-                user.setPassword(password);
-                break;
-            }
-        }
-
-        Connection connection = DBConnection.getConnection();
-        if (connection != null) {
-            try {
-                String sql = "SELECT * FROM user WHERE username = ? AND password = ?";
-                PreparedStatement preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.setString(1, user.getUsername());
-                preparedStatement.setString(2, user.getPassword());
-                ResultSet resultSet = preparedStatement.executeQuery();
-
-                if (resultSet.next()) {
-                    user.setId(resultSet.getInt("id"));
-                    System.out.println("Login successful. Welcome, " + user.getUsername() + "!");
-
-                    return user;
-                } else {
-                    System.out.println("Invalid username or password. Login failed.");
-                }
-
-                resultSet.close();
-                preparedStatement.close();
-                connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return null;
-    }
-
-    private static void addPost() {
-        Scanner scanner = new Scanner(System.in);
+ // addPost() method is overloaded to handle both scenarios by creating a new Post
+    protected void addPost() {
         Post newPost = new Post();
 
         System.out.print("Enter platform (e.g., Twitter, Facebook): ");
@@ -247,6 +183,23 @@ public class SocialMediaApp {
             newPost.setScheduledTime(null); // Set scheduled time as null if the user doesn't want to schedule
         }
 
+        // Delegate to the main addPost() method with the Post object
+        addPost(newPost);
+    }
+
+    // Overloaded addPost() method for a scheduled post
+    private void addPost(String platform, String content, String scheduledTime) {
+        Post newPost = new Post();
+        newPost.setPlatform(platform);
+        newPost.setContent(content);
+        newPost.setScheduledTime(scheduledTime);
+
+        //handles the common functionality of adding a post
+        addPost(newPost);
+    }
+
+    // The main addPost() method that handles the common functionality
+    private void addPost(Post newPost) {
         Connection connection = DBConnection.getConnection();
         if (connection != null) {
             try {
@@ -270,11 +223,11 @@ public class SocialMediaApp {
 
                 int rowsAffected = preparedStatement.executeUpdate();
                 if (rowsAffected > 0) {
-                	System.out.println("**************************************");
+                    System.out.println("**************************************");
                     System.out.println("Post added to the database!");
                     System.out.println("**************************************");
                 } else {
-                	System.out.println("**************************************");
+                    System.out.println("**************************************");
                     System.out.println("Failed to add the post.");
                     System.out.println("**************************************");
                 }
@@ -287,10 +240,13 @@ public class SocialMediaApp {
         }
     }
 
+    @Override
+    protected void editPost() {
+        if (currentUser == null) {
+            System.out.println("Please log in to edit a post.");
+            return;
+        }
 
-
-    private static void editPost() {
-        Scanner scanner = new Scanner(System.in);
         System.out.print("Enter the ID of the post to edit: ");
         int postId = scanner.nextInt();
         scanner.nextLine(); // Consume the newline character
@@ -364,9 +320,13 @@ public class SocialMediaApp {
         }
     }
 
+    @Override
+    protected void schedulePost() {
+        if (currentUser == null) {
+            System.out.println("Please log in to schedule a post.");
+            return;
+        }
 
-    private static void schedulePost() {
-        Scanner scanner = new Scanner(System.in);
         Post newPost = new Post();
 
         System.out.print("Enter platform (e.g., Twitter, Facebook): ");
@@ -405,8 +365,14 @@ public class SocialMediaApp {
             }
         }
     }
-    private static void deletePost() {
-        Scanner scanner = new Scanner(System.in);
+
+    @Override
+    protected void deletePost() {
+        if (currentUser == null) {
+            System.out.println("Please log in to delete a post.");
+            return;
+        }
+
         System.out.print("Enter the ID of the post to delete: ");
         int postId = scanner.nextInt();
         scanner.nextLine(); // Consume the newline character
@@ -467,8 +433,9 @@ public class SocialMediaApp {
             }
         }
     }
-    private static void viewAllPosts() {
-        Connection connection = DBConnection.getConnection();
+    @Override
+    protected void viewAllPosts() {
+    	Connection connection = DBConnection.getConnection();
         if (connection != null) {
             try {
                 String selectQuery = "SELECT * FROM posts";
@@ -496,5 +463,4 @@ public class SocialMediaApp {
                 e.printStackTrace();
             }
         }
-    }
-}
+    }}

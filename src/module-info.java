@@ -4,7 +4,7 @@
 /**
  * @author Elango
  *
- */	
-module MyApps {
+ */
+module Demo {
 	requires java.sql;
 }
